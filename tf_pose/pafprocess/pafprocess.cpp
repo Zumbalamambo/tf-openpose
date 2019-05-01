@@ -149,7 +149,7 @@ int process_paf(int p1, int p2, int p3, float *peaks, int h1, int h2, int h3, fl
                     subset[subset_idx1][18] += peak_infos_line[conns[conn_id].cid2].score + conns[conn_id].score;
                 }
             } else if (found == 2) {
-                int membership;
+                int membership=0;
                 for (int subset_id = 0; subset_id < 18; subset_id ++) {
                     if (subset[subset_idx1][subset_id] > 0 && subset[subset_idx2][subset_id] > 0) {
                         membership = 2;
