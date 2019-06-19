@@ -33,6 +33,13 @@ You need dependencies below.
   - https://github.com/adamrehn/slidingwindow
   - I copied from the above git repo to modify few things.
 
+### Pre-Install Jetson case
+
+```bash
+$ sudo apt-get install libllvm-7-ocaml-dev libllvm7 llvm-7 llvm-7-dev llvm-7-doc llvm-7-examples llvm-7-runtime
+$ export LLVM_CONFIG=/usr/bin/llvm-config-7 
+```
+
 ### Install
 
 Clone the repo and install 3rd-party libraries.
