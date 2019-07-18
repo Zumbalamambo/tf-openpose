@@ -55,7 +55,7 @@ Alternatively, you can install this repo as a shared package using pip.
 
 ```bash
 $ git clone https://www.github.com/ildoonet/tf-pose-estimation
-$ cd tf-openpose
+$ cd tf-pose-estimation
 $ python setup.py install  # Or, `pip install -e .`
 ```
 
