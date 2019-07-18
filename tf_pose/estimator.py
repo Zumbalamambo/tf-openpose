@@ -11,6 +11,7 @@ import time
 from tf_pose import common
 from tf_pose.common import CocoPart
 from tf_pose.tensblur.smoother import Smoother
+import tensorflow.contrib.tensorrt as trt
 
 try:
     from tf_pose.pafprocess import pafprocess
@@ -302,7 +303,7 @@ class PoseEstimator:
 class TfPoseEstimator:
     # TODO : multi-scale
 
-    def __init__(self, graph_path, target_size=(320, 240), tf_config=None):
+    def __init__(self, graph_path, target_size=(320, 240), tf_config=None, trt_bool=False):
         self.target_size = target_size
 
         # load graph
@@ -311,14 +312,27 @@ class TfPoseEstimator:
             graph_def = tf.GraphDef()
             graph_def.ParseFromString(f.read())
 
+        if trt_bool is True:
+            output_nodes = ["Openpose/concat_stage7"]
+            graph_def = trt.create_inference_graph(
+                graph_def,
+                output_nodes,
+                max_batch_size=1,
+                max_workspace_size_bytes=1 << 20,
+                precision_mode="FP16",
+                # precision_mode="INT8",
+                minimum_segment_size=3,
+                is_dynamic_op=True,
+                maximum_cached_engines=int(1e3),
+                use_calibration=True,
+            )
+
         self.graph = tf.get_default_graph()
         tf.import_graph_def(graph_def, name='TfPoseEstimator')
         self.persistent_sess = tf.Session(graph=self.graph, config=tf_config)
 
-        # for op in self.graph.get_operations():
-        #     print(op.name)
-        # for ts in [n.name for n in tf.get_default_graph().as_graph_def().node]:
-        #     print(ts)
+        for ts in [n.name for n in tf.get_default_graph().as_graph_def().node]:
+            print(ts)
 
         self.tensor_image = self.graph.get_tensor_by_name('TfPoseEstimator/image:0')
         self.tensor_output = self.graph.get_tensor_by_name('TfPoseEstimator/Openpose/concat_stage7:0')
@@ -329,7 +343,10 @@ class TfPoseEstimator:
                                                       align_corners=False, name='upsample_heatmat')
         self.tensor_pafMat_up = tf.image.resize_area(self.tensor_output[:, :, :, 19:], self.upsample_size,
                                                      align_corners=False, name='upsample_pafmat')
-        smoother = Smoother({'data': self.tensor_heatMat_up}, 25, 3.0)
+        if trt_bool is True:
+            smoother = Smoother({'data': self.tensor_heatMat_up}, 25, 3.0, 19)
+        else:
+            smoother = Smoother({'data': self.tensor_heatMat_up}, 25, 3.0)
         gaussian_heatMat = smoother.get_output()
 
         max_pooled_in_tensor = tf.nn.pool(gaussian_heatMat, window_shape=(3, 3), pooling_type='MAX', padding='SAME')
