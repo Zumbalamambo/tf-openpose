@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>tfpose_ros</name>
-  <version>0.1.0</version>
+  <version>0.1.1</version>
   <description>ROS Package for Human Pose Estimation Implemented in Tensorflow</description>
 
   <maintainer email="ildoo@ildoo.net">Curtis Kim</maintainer>
