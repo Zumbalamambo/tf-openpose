@@ -44,7 +44,7 @@ EXT = Extension('_pafprocess',
                 include_dirs=[np.get_include()])
 
 setuptools.setup(
-    name='tf-pose',
+    name='tfpose_ros',
     version=_VERSION,
     description=
     'Deep Pose Estimation implemented using Tensorflow with Custom Architectures for fast inference.',
@@ -54,7 +54,7 @@ setuptools.setup(
     author='Ildoo Kim',
     author_email='ildoo@ildoo.net',
     license='Apache License 2.0',
-    package_dir={'tf_pose_data': 'models'},
+    package_dir={'tfpose_ros': 'models'},
     packages=['tf_pose_data'] +
              [pkg_name for pkg_name in setuptools.find_packages()  # main package
               if 'tf_pose' in pkg_name],
