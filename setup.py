@@ -63,5 +63,4 @@ setuptools.setup(
                                    'graph/mobilenet_thin/graph_opt.pb']},
     py_modules=[
         "pafprocess"
-    ],
-    zip_safe=False)
+    ])
