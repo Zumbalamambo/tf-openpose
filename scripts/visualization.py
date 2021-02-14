@@ -6,7 +6,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 
 from tfpose_ros.msg import Persons, Person, BodyPartElm
-from tf_pose.estimator import Human, BodyPart, TfPoseEstimator
+from tfpose_ros.estimator import Human, BodyPart, TfPoseEstimator
 
 
 class VideoFrames:
@@ -14,6 +14,7 @@ class VideoFrames:
     Reference : ros-video-recorder
     https://github.com/ildoonet/ros-video-recorder/blob/master/scripts/recorder.py
     """
+
     def __init__(self, image_topic):
         self.image_sub = rospy.Subscriber(image_topic, Image, self.callback_image, queue_size=1)
         self.bridge = CvBridge()
@@ -50,7 +51,7 @@ def cb_pose(data):
 
     h, w = image.shape[:2]
     if resize_ratio > 0:
-        image = cv2.resize(image, (int(resize_ratio*w), int(resize_ratio*h)), interpolation=cv2.INTER_LINEAR)
+        image = cv2.resize(image, (int(resize_ratio * w), int(resize_ratio * h)), interpolation=cv2.INTER_LINEAR)
 
     # ros topic to Person instance
     humans = []

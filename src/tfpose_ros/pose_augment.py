@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 from tensorpack.dataflow.imgaug.geometry import RotationAndCropValid
 
-from tf_pose.common import CocoPart
+from tfpose_ros.common import CocoPart
 
 _network_w = 368
 _network_h = 368
@@ -87,7 +87,7 @@ def pose_resize_shortestedge(meta, target_size):
         mw = (_network_w - neww) % 2
         mh = (_network_h - newh) % 2
         color = random.randint(0, 255)
-        dst = cv2.copyMakeBorder(dst, ph, ph+mh, pw, pw+mw, cv2.BORDER_CONSTANT, value=(color, 0, 0))
+        dst = cv2.copyMakeBorder(dst, ph, ph + mh, pw, pw + mw, cv2.BORDER_CONSTANT, value=(color, 0, 0))
 
     # adjust meta data
     adjust_joint_list = []
@@ -100,7 +100,7 @@ def pose_resize_shortestedge(meta, target_size):
             # if point[0] <= 0 or point[1] <= 0 or int(point[0]*scale+0.5) > neww or int(point[1]*scale+0.5) > newh:
             #     adjust_joint.append((-1, -1))
             #     continue
-            adjust_joint.append((int(point[0]*scale+0.5) + pw, int(point[1]*scale+0.5) + ph))
+            adjust_joint.append((int(point[0] * scale + 0.5) + pw, int(point[1] * scale + 0.5) + ph))
         adjust_joint_list.append(adjust_joint)
 
     meta.joint_list = adjust_joint_list
@@ -128,7 +128,8 @@ def pose_crop_random(meta):
 
         # check whether any face is inside the box to generate a reasonably-balanced datasets
         for joint in meta.joint_list:
-            if x <= joint[CocoPart.Nose.value][0] < x + target_size[0] and y <= joint[CocoPart.Nose.value][1] < y + target_size[1]:
+            if x <= joint[CocoPart.Nose.value][0] < x + \
+                    target_size[0] and y <= joint[CocoPart.Nose.value][1] < y + target_size[1]:
                 break
 
     return pose_crop(meta, x, y, target_size[0], target_size[1])
@@ -139,7 +140,7 @@ def pose_crop(meta, x, y, w, h):
     target_size = (w, h)
 
     img = meta.img
-    resized = img[y:y+target_size[1], x:x+target_size[0], :]
+    resized = img[y:y + target_size[1], x:x + target_size[0], :]
 
     # adjust meta data
     adjust_joint_list = []
@@ -174,9 +175,26 @@ def pose_flip(meta):
     img = cv2.flip(img, 1)
 
     # flip meta
-    flip_list = [CocoPart.Nose, CocoPart.Neck, CocoPart.LShoulder, CocoPart.LElbow, CocoPart.LWrist, CocoPart.RShoulder, CocoPart.RElbow, CocoPart.RWrist,
-                 CocoPart.LHip, CocoPart.LKnee, CocoPart.LAnkle, CocoPart.RHip, CocoPart.RKnee, CocoPart.RAnkle,
-                 CocoPart.LEye, CocoPart.REye, CocoPart.LEar, CocoPart.REar, CocoPart.Background]
+    flip_list = [
+        CocoPart.Nose,
+        CocoPart.Neck,
+        CocoPart.LShoulder,
+        CocoPart.LElbow,
+        CocoPart.LWrist,
+        CocoPart.RShoulder,
+        CocoPart.RElbow,
+        CocoPart.RWrist,
+        CocoPart.LHip,
+        CocoPart.LKnee,
+        CocoPart.LAnkle,
+        CocoPart.RHip,
+        CocoPart.RKnee,
+        CocoPart.RAnkle,
+        CocoPart.LEye,
+        CocoPart.REye,
+        CocoPart.LEar,
+        CocoPart.REar,
+        CocoPart.Background]
     adjust_joint_list = []
     for joint in meta.joint_list:
         adjust_joint = []

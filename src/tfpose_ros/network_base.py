@@ -7,8 +7,8 @@ import numpy as np
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
-from tf_pose.common import to_str
-from tf_pose import common
+from tfpose_ros.common import to_str
+from tfpose_ros import common
 
 DEFAULT_PADDING = 'SAME'
 
@@ -142,7 +142,8 @@ class BaseNetwork(object):
 
     def make_var(self, name, shape, trainable=True):
         '''Creates a new TensorFlow variable.'''
-        return tf.get_variable(name, shape, trainable=self.trainable & trainable, initializer=tf.contrib.layers.xavier_initializer())
+        return tf.get_variable(name, shape, trainable=self.trainable & trainable,
+                               initializer=tf.contrib.layers.xavier_initializer())
 
     def validate_padding(self, padding):
         '''Verifies that the padding is one of the supported ones.'''
@@ -151,7 +152,7 @@ class BaseNetwork(object):
     @layer
     def normalize_vgg(self, input, name):
         # normalize input -0.5 ~ 0.5
-        input = tf.multiply(input, 1./ 256.0, name=name + '_divide')
+        input = tf.multiply(input, 1. / 256.0, name=name + '_divide')
         input = tf.add(input, -0.5, name=name + '_subtract')
         return input
 
@@ -249,7 +250,7 @@ class BaseNetwork(object):
         assert c_i % group == 0
         assert c_o % group == 0
         # Convolution for a given input and kernel
-        convolve = lambda i, k: tf.nn.conv2d(i, k, [1, s_h, s_w, 1], padding=padding)
+        def convolve(i, k): return tf.nn.conv2d(i, k, [1, s_h, s_w, 1], padding=padding)
         with tf.variable_scope(name) as scope:
             kernel = self.make_var('weights', shape=[k_h, k_w, c_i / group, c_o], trainable=self.trainable & trainable)
             if group == 1:

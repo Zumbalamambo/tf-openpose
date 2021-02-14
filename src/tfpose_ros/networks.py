@@ -3,11 +3,11 @@ from os.path import dirname, abspath
 
 import tensorflow as tf
 
-from tf_pose.network_mobilenet import MobilenetNetwork
-from tf_pose.network_mobilenet_thin import MobilenetNetworkThin
+from tfpose_ros.network_mobilenet import MobilenetNetwork
+from tfpose_ros.network_mobilenet_thin import MobilenetNetworkThin
 
-from tf_pose.network_cmu import CmuNetwork
-from tf_pose.network_mobilenet_v2 import Mobilenetv2Network
+from tfpose_ros.network_cmu import CmuNetwork
+from tfpose_ros.network_mobilenet_v2 import Mobilenetv2Network
 
 
 def _get_base_path():
@@ -106,7 +106,7 @@ def get_network(type, placeholder_input, sess_for_load=None, trainable=True):
         else:
             try:
                 s = '%dx%d' % (placeholder_input.shape[2], placeholder_input.shape[1])
-            except:
+            except BaseException:
                 s = ''
             ckpts = {
                 'mobilenet': 'trained/mobilenet_%s/model-246038' % s,

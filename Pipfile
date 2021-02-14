@@ -1,0 +1,27 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+argparse = "*"
+dill = "*"
+fire = "*"
+matplotlib = "*"
+numba = "*"
+psutil = "*"
+pycocotools = "*"
+requests = "*"
+scikit-image = "*"
+scipy = "*"
+slidingwindow = "*"
+tqdm = "*"
+tensorpack = {git = "https://github.com/ppwwyyxx/tensorpack.git"}
+tensorflow = "*"
+opencv-contrib-python = "*"
+empy = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.7"

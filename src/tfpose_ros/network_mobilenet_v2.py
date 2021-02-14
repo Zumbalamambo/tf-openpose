@@ -2,47 +2,48 @@ from __future__ import absolute_import
 
 import tensorflow as tf
 
-from tf_pose import network_base
+from tfpose_ros import network_base
+from tfpose_ros.mobilenet import mobilenet_v2
+from tfpose_ros.network_base import layer
 
 
-class MobilenetNetworkThin(network_base.BaseNetwork):
-    def __init__(self, inputs, trainable=True, conv_width=1.0, conv_width2=None):
+class Mobilenetv2Network(network_base.BaseNetwork):
+    def __init__(self, inputs, trainable=True, conv_width=1.0, conv_width2=1.0):
         self.conv_width = conv_width
-        self.conv_width2 = conv_width2 if conv_width2 else conv_width
+        self.refine_width = conv_width2
         network_base.BaseNetwork.__init__(self, inputs, trainable)
 
+    @layer
+    def base(self, input, name):
+        with tf.contrib.slim.arg_scope(mobilenet_v2.training_scope()):
+            net, endpoints = mobilenet_v2.mobilenet_base(
+                input, self.conv_width, finegrain_classification_mode=(
+                    self.conv_width < 1.0))
+            for k, tensor in sorted(list(endpoints.items()), key=lambda x: x[0]):
+                self.layers['%s/%s' % (name, k)] = tensor
+                # print(k, tensor.shape)
+            return net
+
     def setup(self):
-        min_depth = 8
-        depth = lambda d: max(int(d * self.conv_width), min_depth)
-        depth2 = lambda d: max(int(d * self.conv_width2), min_depth)
+        def depth2(x): return int(x * self.refine_width)
 
-        with tf.variable_scope(None, 'MobilenetV1'):
-            (self.feed('image')
-             .convb(3, 3, depth(32), 2, name='Conv2d_0')
-             .separable_conv(3, 3, depth(64), 1, name='Conv2d_1')
-             .separable_conv(3, 3, depth(128), 2, name='Conv2d_2')
-             .separable_conv(3, 3, depth(128), 1, name='Conv2d_3')
-             .separable_conv(3, 3, depth(256), 2, name='Conv2d_4')
-             .separable_conv(3, 3, depth(256), 1, name='Conv2d_5')
-             .separable_conv(3, 3, depth(512), 1, name='Conv2d_6')
-             .separable_conv(3, 3, depth(512), 1, name='Conv2d_7')
-             .separable_conv(3, 3, depth(512), 1, name='Conv2d_8')
-             .separable_conv(3, 3, depth(512), 1, name='Conv2d_9')
-             .separable_conv(3, 3, depth(512), 1, name='Conv2d_10')
-             .separable_conv(3, 3, depth(512), 1, name='Conv2d_11')
-             # .separable_conv(3, 3, depth(1024), 2, name='Conv2d_12')
-             # .separable_conv(3, 3, depth(1024), 1, name='Conv2d_13')
-             )
+        self.feed('image').base(name='base')
 
-        (self.feed('Conv2d_3').max_pool(2, 2, 2, 2, name='Conv2d_3_pool'))
-
-        (self.feed('Conv2d_3_pool', 'Conv2d_7', 'Conv2d_11')
-         .concat(3, name='feat_concat'))
+        # TODO : add more feature with downsample?
+        # self.feed('base/layer_4/output').max_pool(2, 2, 2, 2, name='base/layer_4/output/downsample')
+        # self.feed('base/layer_4/output').avg_pool(2, 2, 2, 2, name='base/layer_4/output/downsample')
+        self.feed('base/layer_14/output').upsample(factor='base/layer_7/output', name='base/layer_14/output/upsample')
+        (self.feed(
+            'base/layer_7/output',
+            'base/layer_14/output/upsample',
+            # 'base/layer_4/output/downsample'
+        ).concat(3, name='feat_concat'))
 
         feature_lv = 'feat_concat'
         with tf.variable_scope(None, 'Openpose'):
             prefix = 'MConv_Stage1'
             (self.feed(feature_lv)
+             # .se_block(name=prefix + '_L1_se', ratio=8)
              .separable_conv(3, 3, depth2(128), 1, name=prefix + '_L1_1')
              .separable_conv(3, 3, depth2(128), 1, name=prefix + '_L1_2')
              .separable_conv(3, 3, depth2(128), 1, name=prefix + '_L1_3')
@@ -50,6 +51,7 @@ class MobilenetNetworkThin(network_base.BaseNetwork):
              .separable_conv(1, 1, 38, 1, relu=False, name=prefix + '_L1_5'))
 
             (self.feed(feature_lv)
+             # .se_block(name=prefix + '_L2_se', ratio=8)
              .separable_conv(3, 3, depth2(128), 1, name=prefix + '_L2_1')
              .separable_conv(3, 3, depth2(128), 1, name=prefix + '_L2_2')
              .separable_conv(3, 3, depth2(128), 1, name=prefix + '_L2_3')
@@ -63,6 +65,7 @@ class MobilenetNetworkThin(network_base.BaseNetwork):
                            prefix_prev + '_L2_5',
                            feature_lv)
                  .concat(3, name=prefix + '_concat')
+                 # .se_block(name=prefix + '_L1_se', ratio=8)
                  .separable_conv(3, 3, depth2(128), 1, name=prefix + '_L1_1')
                  .separable_conv(3, 3, depth2(128), 1, name=prefix + '_L1_2')
                  .separable_conv(3, 3, depth2(128), 1, name=prefix + '_L1_3')
@@ -70,6 +73,7 @@ class MobilenetNetworkThin(network_base.BaseNetwork):
                  .separable_conv(1, 1, 38, 1, relu=False, name=prefix + '_L1_5'))
 
                 (self.feed(prefix + '_concat')
+                 # .se_block(name=prefix + '_L2_se', ratio=8)
                  .separable_conv(3, 3, depth2(128), 1, name=prefix + '_L2_1')
                  .separable_conv(3, 3, depth2(128), 1, name=prefix + '_L2_2')
                  .separable_conv(3, 3, depth2(128), 1, name=prefix + '_L2_3')
@@ -95,12 +99,14 @@ class MobilenetNetworkThin(network_base.BaseNetwork):
     def loss_last(self):
         return self.get_output('MConv_Stage6_L1_5'), self.get_output('MConv_Stage6_L2_5')
 
-    def restorable_variables(self):
+    def restorable_variables(self, only_backbone=True):
         vs = {v.op.name: v for v in tf.global_variables() if
-              'MobilenetV1/Conv2d' in v.op.name and
+              ('MobilenetV2' in v.op.name or (only_backbone is False and 'Openpose' in v.op.name)) and
               # 'global_step' not in v.op.name and
               # 'beta1_power' not in v.op.name and 'beta2_power' not in v.op.name and
+              'quant' not in v.op.name and
               'RMSProp' not in v.op.name and 'Momentum' not in v.op.name and
               'Ada' not in v.op.name and 'Adam' not in v.op.name
               }
+        # print(set([v.op.name for v in tf.global_variables()]) - set(list(vs.keys())))
         return vs

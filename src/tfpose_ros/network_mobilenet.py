@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import tensorflow as tf
 
-from tf_pose import network_base
+from tfpose_ros import network_base
 
 
 class MobilenetNetwork(network_base.BaseNetwork):
@@ -14,8 +14,8 @@ class MobilenetNetwork(network_base.BaseNetwork):
 
     def setup(self):
         min_depth = 8
-        depth = lambda d: max(int(d * self.conv_width), min_depth)
-        depth2 = lambda d: max(int(d * self.conv_width2), min_depth)
+        def depth(d): return max(int(d * self.conv_width), min_depth)
+        def depth2(d): return max(int(d * self.conv_width2), min_depth)
 
         with tf.variable_scope(None, 'MobilenetV1'):
             (self.feed('image')
@@ -96,7 +96,7 @@ class MobilenetNetwork(network_base.BaseNetwork):
 
     def loss_last(self):
         return self.get_output('MConv_Stage%d_L1_5' % self.get_refine_num()), \
-               self.get_output('MConv_Stage%d_L2_5' % self.get_refine_num())
+            self.get_output('MConv_Stage%d_L2_5' % self.get_refine_num())
 
     def restorable_variables(self):
         vs = {v.op.name: v for v in tf.global_variables() if

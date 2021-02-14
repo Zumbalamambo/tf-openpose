@@ -6,12 +6,13 @@ from collections import OrderedDict
 import numpy as np
 import logging
 import argparse
-import json, re
+import json
+import re
 from tqdm import tqdm
 
-from tf_pose.common import read_imgfile
-from tf_pose.estimator import TfPoseEstimator
-from tf_pose.networks import model_wh, get_graph_path
+from tfpose_ros.common import read_imgfile
+from tfpose_ros.estimator import TfPoseEstimator
+from tfpose_ros.networks import model_wh, get_graph_path
 
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
@@ -47,8 +48,13 @@ def write_coco_json(human, image_w, image_h):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Tensorflow Openpose Inference')
-    parser.add_argument('--resize', type=str, default='0x0', help='if provided, resize images before they are processed. default=0x0, Recommends : 432x368 or 656x368 or 1312x736 ')
-    parser.add_argument('--resize-out-ratio', type=float, default=8.0, help='if provided, resize heatmaps before they are post-processed. default=8.0')
+    parser.add_argument(
+        '--resize',
+        type=str,
+        default='0x0',
+        help='if provided, resize images before they are processed. default=0x0, Recommends : 432x368 or 656x368 or 1312x736 ')
+    parser.add_argument('--resize-out-ratio', type=float, default=8.0,
+                        help='if provided, resize heatmaps before they are post-processed. default=8.0')
     parser.add_argument('--model', type=str, default='cmu', help='cmu / mobilenet_thin / mobilenet_v2_large')
     parser.add_argument('--cocoyear', type=str, default='2014')
     parser.add_argument('--coco-dir', type=str, default='/data/public/rw/coco/')

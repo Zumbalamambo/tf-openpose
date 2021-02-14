@@ -30,4 +30,5 @@ catkin_package(
   CATKIN_DEPENDS rospy message_generation message_runtime
 )
 
-install()
+install(DIRECTORY launch scripts
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

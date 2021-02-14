@@ -8,13 +8,13 @@ import numpy as np
 import tensorflow as tf
 import time
 
-from tf_pose import common
-from tf_pose.common import CocoPart
-from tf_pose.tensblur.smoother import Smoother
+from tfpose_ros import common
+from tfpose_ros.common import CocoPart
+from tfpose_ros.tensblur.smoother import Smoother
 import tensorflow.contrib.tensorrt as trt
 
 try:
-    from tf_pose.pafprocess import pafprocess
+    from tfpose_ros.pafprocess import pafprocess
 except ModuleNotFoundError as e:
     print(e)
     print('you need to build c++ library for pafprocess. See : https://github.com/ildoonet/tf-pose-estimation/tree/master/tf_pose/pafprocess')
@@ -432,7 +432,7 @@ class TfPoseEstimator:
         return npimg
 
     def _get_scaled_img(self, npimg, scale):
-        get_base_scale = lambda s, w, h: max(self.target_size[0] / float(h), self.target_size[1] / float(w)) * s
+        def get_base_scale(s, w, h): return max(self.target_size[0] / float(h), self.target_size[1] / float(w)) * s
         img_h, img_w = npimg.shape[:2]
 
         if scale is None:
@@ -576,6 +576,6 @@ if __name__ == '__main__':
 
     t = time.time()
     humans = PoseEstimator.estimate_paf(data['peaks'], data['heatMat'], data['pafMat'])
-    dt = time.time() - t;
+    dt = time.time() - t
     t = time.time()
     logger.info('elapsed #humans=%d time=%.8f' % (len(humans), dt))

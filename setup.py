@@ -37,8 +37,8 @@ DEPENDENCY_LINKS = [
 
 EXT = Extension('_pafprocess',
                 sources=[
-                    'tf_pose/pafprocess/pafprocess_wrap.cpp',
-                    'tf_pose/pafprocess/pafprocess.cpp',
+                    'src/tfpose_ros/pafprocess/pafprocess_wrap.cpp',
+                    'src/tfpose_ros/pafprocess/pafprocess.cpp',
                 ],
                 swig_opts=['-c++'],
                 include_dirs=[np.get_include()])
@@ -54,13 +54,9 @@ setuptools.setup(
     author='Ildoo Kim',
     author_email='ildoo@ildoo.net',
     license='Apache License 2.0',
-    package_dir={'tfpose_ros': 'models'},
-    packages=['tf_pose_data'] +
-             [pkg_name for pkg_name in setuptools.find_packages()  # main package
-              if 'tf_pose' in pkg_name],
+    package_dir={'': 'src'},
+    packages=['tfpose_ros'],
     ext_modules=[EXT],
-    package_data={'tf_pose_data': ['graph/cmu/graph_opt.pb',
-                                   'graph/mobilenet_thin/graph_opt.pb']},
     py_modules=[
         "pafprocess"
     ])

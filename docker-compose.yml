@@ -1,0 +1,14 @@
+version: "3"
+
+services:
+  tf-pose:
+    image: tf-pose
+    build: .
+    container_name: tf-pose
+    runtime: nvidia
+    tty: true
+    volumes:
+      - ${PWD}:/ros/src/tf-pose-estimation
+      - ~/.ros/RefineNet.pth:/ros/src/tf-pose-estimation/resources/RefineNet.pth
+      - ~/.ros/SMAP_model.pth:/ros/src/tf-pose-estimation/resources/SMAP_model.pth
+    network_mode: "host"
