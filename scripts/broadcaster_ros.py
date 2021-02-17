@@ -4,6 +4,7 @@ import os
 import sys
 import ast
 
+import tensorflow as tf
 from threading import Lock
 import rospy
 import rospkg
@@ -67,7 +68,7 @@ if __name__ == '__main__':
 
     # parameters
     image_topic = rospy.get_param('~camera', '')
-    model = rospy.get_param('~model', 'cmu')
+    # model = rospy.get_param('~model', 'cmu')
 
     resolution = rospy.get_param('~resolution', '432x368')
     resize_out_ratio = float(rospy.get_param('~resize_out_ratio', '4.0'))
@@ -79,15 +80,17 @@ if __name__ == '__main__':
 
     try:
         w, h = model_wh(resolution)
-        graph_path = get_graph_path(model)
+        ros_pack = rospkg.RosPack()
+        package_path = ros_pack.get_path('tfpose_ros')
+        graph_path = rospy.get_param('~model', package_path + '/models/graph/cmu/graph_opt.pb')
 
-        rospack = rospkg.RosPack()
-        graph_path = os.path.join(rospack.get_path('tfpose_ros'), graph_path)
     except Exception as e:
         rospy.logerr('invalid model: %s, e=%s' % (model, e))
         sys.exit(-1)
-
-    pose_estimator = TfPoseEstimator(graph_path, target_size=(w, h))
+    config = tf.ConfigProto()
+    config.gpu_options.allow_growth = True
+    config.gpu_options.visible_device_list = "0"
+    pose_estimator = TfPoseEstimator(graph_path, target_size=(w, h), tf_config=config)
     cv_bridge = CvBridge()
 
     rospy.Subscriber(image_topic, Image, callback_image, queue_size=1, buff_size=2**24)

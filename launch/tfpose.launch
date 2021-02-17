@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="gpuid" default="0" />
+    <arg name="color_image" default="/realsense_front/color/image_rect_color" />
+    <arg name="model" default="$(find tfpose_ros)/models/graph/cmu/graph_opt.pb" />
+    <arg name="resolution" default="432x368" />
+    <arg name="visualize" default="false" />
+
+    <node name="pose_estimator" pkg="tfpose_ros" type="broadcaster_ros.py" output="screen" required="true">
+        <env name="CUDA_VISIBLE_DEVICES" value="$(arg gpuid)" />
+        <param name="camera" value="$(arg color_image)" />
+        <param name="model" value="$(arg model)" />
+        <param name="resolution" value="$(arg resolution)" />
+    </node>
+
+    <node if="$(arg visualize)" name="pose_estimator_vis" pkg="tfpose_ros" type="visualization.py" output="screen" required="true">
+        <param name="camera" value="$(arg color_image)" />
+        <param name="pose" value="/pose_estimator/pose" />
+    </node>
+
+</launch>

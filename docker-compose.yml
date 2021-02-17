@@ -5,10 +5,9 @@ services:
     image: tf-pose
     build: .
     container_name: tf-pose
+    command: bash -c "cd /ros/src/tf-pose-estimation && pipenv run bash -c 'source /ros/devel/setup.bash;roslaunch tfpose_ros tfpose.launch'"
     runtime: nvidia
     tty: true
     volumes:
       - ${PWD}:/ros/src/tf-pose-estimation
-      - ~/.ros/RefineNet.pth:/ros/src/tf-pose-estimation/resources/RefineNet.pth
-      - ~/.ros/SMAP_model.pth:/ros/src/tf-pose-estimation/resources/SMAP_model.pth
     network_mode: "host"

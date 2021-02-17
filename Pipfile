@@ -17,11 +17,16 @@ scipy = "*"
 slidingwindow = "*"
 tqdm = "*"
 tensorpack = {git = "https://github.com/ppwwyyxx/tensorpack.git"}
-tensorflow = "*"
+tensorflow-gpu = "==1.14.0"
 opencv-contrib-python = "*"
 empy = "*"
+pyyaml = "*"
+rospkg = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.7"
+python_version = "3.6"
+
+[scripts]
+pafprocess = "cd src/tfpose_ros/pafprocess && swig -python -c++ pafprocess.i && python3 setup.py build_ext --inplace"

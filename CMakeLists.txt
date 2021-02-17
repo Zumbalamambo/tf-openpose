@@ -28,7 +28,14 @@ generate_messages(
 
 catkin_package(
   CATKIN_DEPENDS rospy message_generation message_runtime
+) 
+
+
+catkin_install_python(PROGRAMS
+  scripts/broadcaster_ros.py
+  scripts/visualization.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-install(DIRECTORY launch scripts
+install(DIRECTORY launch
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
