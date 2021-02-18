@@ -9,6 +9,7 @@ from threading import Lock
 import rospy
 import rospkg
 from cv_bridge import CvBridge, CvBridgeError
+import message_filters
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
 from tfpose_ros.msg import Persons, Person, BodyPartElm
@@ -17,7 +18,7 @@ from tfpose_ros.estimator import TfPoseEstimator
 from tfpose_ros.networks import model_wh, get_graph_path
 
 
-def humans_to_msg(humans):
+def humans_to_msg(humans, depth_image):
     persons = Persons()
 
     for human in humans:
@@ -30,6 +31,7 @@ def humans_to_msg(humans):
             body_part_msg.part_id = body_part.part_idx
             body_part_msg.x = body_part.x
             body_part_msg.y = body_part.y
+            body_part_msg.z = depth_image[int(body_part.y), int(body_part.x)]
             body_part_msg.confidence = body_part.score
             person.body_part.append(body_part_msg)
         persons.persons.append(person)
@@ -37,10 +39,11 @@ def humans_to_msg(humans):
     return persons
 
 
-def callback_image(data):
+def callback_image(color_msg, depth_msg):
     # et = time.time()
     try:
-        cv_image = cv_bridge.imgmsg_to_cv2(data, "bgr8")
+        color_image = cv_bridge.imgmsg_to_cv2(color_msg, "bgr8")
+        depth_image = cv_bridge.imgmsg_to_cv2(depth_msg, "passthrough")
     except CvBridgeError as e:
         rospy.logerr('[tf-pose-estimation] Converting Image Error. ' + str(e))
         return
@@ -50,14 +53,14 @@ def callback_image(data):
         return
 
     try:
-        humans = pose_estimator.inference(cv_image, resize_to_default=True, upsample_size=resize_out_ratio)
+        humans = pose_estimator.inference(color_image, resize_to_default=True, upsample_size=resize_out_ratio)
     finally:
         tf_lock.release()
 
-    msg = humans_to_msg(humans)
-    msg.image_w = data.width
-    msg.image_h = data.height
-    msg.header = data.header
+    msg = humans_to_msg(humans, depth_image)
+    msg.image_w = color_msg.width
+    msg.image_h = color_msg.height
+    msg.header = color_msg.header
 
     pub_pose.publish(msg)
 
@@ -67,16 +70,9 @@ if __name__ == '__main__':
     rospy.init_node('TfPoseEstimatorROS', anonymous=True, log_level=rospy.INFO)
 
     # parameters
-    image_topic = rospy.get_param('~camera', '')
-    # model = rospy.get_param('~model', 'cmu')
-
     resolution = rospy.get_param('~resolution', '432x368')
     resize_out_ratio = float(rospy.get_param('~resize_out_ratio', '4.0'))
     tf_lock = Lock()
-
-    if not image_topic:
-        rospy.logerr('Parameter \'camera\' is not provided.')
-        sys.exit(-1)
 
     try:
         w, h = model_wh(resolution)
@@ -85,7 +81,7 @@ if __name__ == '__main__':
         graph_path = rospy.get_param('~model', package_path + '/models/graph/cmu/graph_opt.pb')
 
     except Exception as e:
-        rospy.logerr('invalid model: %s, e=%s' % (model, e))
+        rospy.logerr('invalid model: %s, e=%s' % (graph_path, e))
         sys.exit(-1)
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
@@ -93,7 +89,10 @@ if __name__ == '__main__':
     pose_estimator = TfPoseEstimator(graph_path, target_size=(w, h), tf_config=config)
     cv_bridge = CvBridge()
 
-    rospy.Subscriber(image_topic, Image, callback_image, queue_size=1, buff_size=2**24)
+    color_sub = message_filters.Subscriber("~color", Image)
+    depth_sub = message_filters.Subscriber("~depth", Image)
+    sub = message_filters.ApproximateTimeSynchronizer([color_sub, depth_sub], 10, 0.5)
+    sub.registerCallback(callback_image)
     pub_pose = rospy.Publisher('~pose', Persons, queue_size=1)
 
     rospy.loginfo('start+')
