@@ -5,12 +5,14 @@
     <arg name="depth_image" default="/realsense_front/depth/image_rect_metric" />
     <arg name="model" default="$(find tfpose_ros)/models/graph/cmu/graph_opt.pb" />
     <arg name="resolution" default="432x368" />
-    <arg name="visualize" default="false" />
+    <arg name="visualize" default="true" />
+    <arg name="hertz" default="5" />
 
     <node name="pose_estimator" pkg="tfpose_ros" type="broadcaster_ros.py" output="screen" required="true">
         <env name="CUDA_VISIBLE_DEVICES" value="$(arg gpuid)" />
         <param name="model" value="$(arg model)" />
         <param name="resolution" value="$(arg resolution)" />
+        <param name="hertz" value="5"/>
         <remap from="~color" to="$(arg color_image)" />
         <remap from="~depth" to="$(arg depth_image)" />
     </node>
