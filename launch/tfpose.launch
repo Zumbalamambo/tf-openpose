@@ -1,18 +1,18 @@
 <?xml version="1.0"?>
 <launch>
     <arg name="gpuid" default="0" />
-    <arg name="color_image" default="/realsense_front/color/image_rect_color" />
-    <arg name="depth_image" default="/realsense_front/depth/image_rect_metric" />
+    <arg name="color_image" default="/realsense_front/color/image_rect_color/compressed" />
+    <arg name="depth_image" default="/realsense_front/depth/image_rect_raw/compressed" />
     <arg name="model" default="$(find tfpose_ros)/models/graph/cmu/graph_opt.pb" />
     <arg name="resolution" default="432x368" />
     <arg name="visualize" default="true" />
-    <arg name="hertz" default="5" />
+    <arg name="hertz" default="30" />
 
     <node name="pose_estimator" pkg="tfpose_ros" type="broadcaster_ros.py" output="screen" required="true">
         <env name="CUDA_VISIBLE_DEVICES" value="$(arg gpuid)" />
         <param name="model" value="$(arg model)" />
         <param name="resolution" value="$(arg resolution)" />
-        <param name="hertz" value="5"/>
+        <param name="hertz" value="$(arg hertz)"/>
         <remap from="~color" to="$(arg color_image)" />
         <remap from="~depth" to="$(arg depth_image)" />
     </node>

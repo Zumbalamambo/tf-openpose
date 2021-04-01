@@ -1,8 +1,9 @@
 #!/usr/bin/env python
+import numpy as np
 import time
 import cv2
 import rospy
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import CompressedImage, Image
 from cv_bridge import CvBridge, CvBridgeError
 
 from tfpose_ros.msg import Persons, Person, BodyPartElm
@@ -16,13 +17,13 @@ class VideoFrames:
     """
 
     def __init__(self, image_topic):
-        self.image_sub = rospy.Subscriber(image_topic, Image, self.callback_image, queue_size=1)
+        self.image_sub = rospy.Subscriber(image_topic, CompressedImage, self.callback_image, queue_size=1)
         self.bridge = CvBridge()
         self.frames = []
 
     def callback_image(self, data):
         try:
-            cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
+            cv_image = cv2.imdecode(np.fromstring(data.data, np.uint8), cv2.IMREAD_COLOR)
         except CvBridgeError as e:
             rospy.logerr('Converting Image Error. ' + str(e))
             return

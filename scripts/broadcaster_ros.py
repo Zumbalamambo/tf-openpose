@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import cv2
+import numpy as np
 import tensorflow as tf
 from threading import Lock
 
@@ -6,7 +8,7 @@ from cv_bridge import CvBridge, CvBridgeError
 import message_filters
 import rospkg
 import rospy
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import CompressedImage
 from std_srvs.srv import SetBool, SetBoolResponse
 
 from tfpose_ros.estimator import TfPoseEstimator
@@ -45,8 +47,8 @@ class PoseEstimator(object):
         self.__pub_pose = rospy.Publisher('~pose', Persons, queue_size=1)
 
         self.__cv_bridge = CvBridge()
-        color_sub = message_filters.Subscriber("~color", Image)
-        depth_sub = message_filters.Subscriber("~depth", Image)
+        color_sub = message_filters.Subscriber("~color", CompressedImage)
+        depth_sub = message_filters.Subscriber("~depth", CompressedImage)
         sub = message_filters.ApproximateTimeSynchronizer([color_sub, depth_sub], 10, 0.5)
         sub.registerCallback(self.__callback_image)
 
@@ -89,8 +91,8 @@ class PoseEstimator(object):
             return
 
         try:
-            color_image = self.__cv_bridge.imgmsg_to_cv2(color_msg, "bgr8")
-            depth_image = self.__cv_bridge.imgmsg_to_cv2(depth_msg, "passthrough")
+            color_image = cv2.imdecode(np.fromstring(color_msg.data, np.uint8), cv2.IMREAD_COLOR)
+            depth_image = cv2.imdecode(np.fromstring(depth_msg.data, np.uint8), cv2.IMREAD_UNCHANGED)
         except CvBridgeError as e:
             rospy.logerr('Converting Image Error. ' + str(e))
             return
@@ -108,8 +110,8 @@ class PoseEstimator(object):
             self.__tf_lock.release()
 
         msg = self.__humans_to_msg(humans, depth_image)
-        msg.image_w = color_msg.width
-        msg.image_h = color_msg.height
+        msg.image_w = color_image.shape[1]
+        msg.image_h = color_image.shape[0]
         msg.header = color_msg.header
 
         self.__pub_pose.publish(msg)
